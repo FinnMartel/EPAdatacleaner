@@ -1,0 +1,57 @@
+####Import any EPA dataset. Replace X with desired physical/chemical property, replace file paths with your own.
+###Make sure you have pandas installed to virtual python environment 
+
+import pandas as pd
+
+# Load USGS data
+file_path = '/path/to/your/USGS_monitoring_data/file.csv'
+df = pd.read_csv(file_path)
+
+# List of columns to keep (you can add/subtract columns as you need)
+columns_to_keep = [
+    'CharacteristicName',
+    'ResultMeasureValue',
+    'ResultMeasure/MeasureUnitCode',
+    'ActivityStartDate',
+    'ActivityStartTime/Time',
+    'ActivityStartTime/TimeZoneCode',
+    'ResultAnalyticalMethod/MethodIdentifier',
+    'ResultAnalyticalMethod/MethodName',
+    'MonitoringLocationIdentifier',
+    'MonitoringLocationName',
+    'ResultStatusIdentifier',
+    'MeasureQualifierCode',
+    'ResultCommentText'
+]
+
+# Create a subset DataFrame with only the specified columns
+subset_df = df[columns_to_keep]
+
+# Further subset the DataFrame to include only rows with desired measured physical/chemical property as named in the dataset
+DO_df = subset_df[subset_df['CharacteristicName'] == 'X']
+
+# Join coordinate data 
+station_path = '/path/to/your/USGS_station_data/file.csv'
+station_df = pd.read_csv(station_path)
+merged_df = pd.merge(DO_df, station_df[['MonitoringLocationIdentifier', 'MonitoringLocationName', 'LatitudeMeasure', 'LongitudeMeasure']],
+                     on='MonitoringLocationIdentifier', how='left')
+
+print(merged_df)
+
+#Optional - Subset for only relevant monitoring stations. For example, (here I did a certain section of the Delaware river I was interpolating)
+station_identifiers = [
+    'USGS-01467195', 'USGS-01444800', 'USGS-01467200', 'USGS-01477200',
+    'DRBC-1418 ICP', 'DRBC-1643 ICP', 'DRBC-1748 ICP', 'DRBC-1838 ICP',
+    'DRBC-1978 ICP', 'DRBC-2074 ICP', 'DRBC-2184 ICP', 'DRBC-3216 ICP',
+    'NJDEP_AMERICORPS-WAUNTDEL05'
+]
+final_df = merged_df[merged_df['MonitoringLocationIdentifier'].isin(station_identifiers)]
+
+
+#Save to new file
+output_path = 'desired/output/path.csv'
+final_df.to_csv(output_path, index=False)
+
+
+
+print("done")
